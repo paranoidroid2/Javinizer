@@ -44,7 +44,7 @@
   ],
   "match.excludedfilestring": ["^.*-trailer*", "^.*-5\\."],
   "match.regex": false,
-  "match.regex.string": "([a-zA-Z|tT28]+-\\d+[zZ]?[eE]?)(?:-pt)?(\\d{1,2})?",
+  "match.regex.string": "([a-zA-ZtT28]+-\\d+[zZ]?[eE]?)(?:-pt)?(\\d{1,2})?",
   "match.regex.idmatch": 1,
   "match.regex.ptmatch": 2,
   "sort.movetofolder": true,

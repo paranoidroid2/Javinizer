@@ -269,7 +269,7 @@ function Convert-JVTitle {
             } #>
 
 
-            if ($fileBaseNameUpper[$x] -match '(([a-zA-Z|tT28|rR18]+)-(\d+z{0,1}Z{0,1}e{0,1}E{0,1}))') {
+            if ($fileBaseNameUpper[$x] -match '(([a-zA-ZtT28rR18]+)-(\d+z{0,1}Z{0,1}e{0,1}E{0,1}))') {
                 $movieId = $fileBaseNameUpperCleaned[$x]
                 $splitId = $fileBaseNameUpperCleaned[$x] -split '-'
                 if (($splitId[1])[-1] -match '\D') {
@@ -302,7 +302,7 @@ function Convert-JVTitle {
 
             # Turn on strict filematching if the movie does not appear to be a standard DVD Id format
             # This will require less reliance on using -Strict during commandline usage
-            if ($movieId -notmatch '([a-zA-Z|tT28]+-\d+[zZ]?[eE]?)' -and $RegexEnabled -eq $false) {
+            if ($movieId -notmatch '([a-zA-ZtT28]+-\d+[zZ]?[eE]?)' -and $RegexEnabled -eq $false) {
                 $Strict = $true
                 Write-Host "Strict"
                 Write-Host "Strict"
