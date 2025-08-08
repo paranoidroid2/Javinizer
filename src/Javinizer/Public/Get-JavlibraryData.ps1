@@ -12,35 +12,59 @@ function Get-JavlibraryData {
     )
 
     process {
-        $movieDataObject = @()
+        # The new python-based scraper handles the web request and parsing.
+        $scrapedData = Get-JavlibraryDataFromPython -Url $Url
 
-        try {
-            Write-JVLog -Write:$script:JVLogWrite -LogPath $script:JVLogPath -WriteLevel $script:JVLogWriteLevel -Level Debug -Message "[$($MyInvocation.MyCommand.Name)] Performing [GET] on URL [$Url]"
-            $webRequest = Invoke-WebRequest -Uri $Url -Method Get -WebSession $Session -UserAgent $Session.UserAgent -Verbose:$false
-        } catch {
-            Write-JVLog -Write:$script:JVLogWrite -LogPath $script:JVLogPath -WriteLevel $script:JVLogWriteLevel -Level Error -Message "[$($MyInvocation.MyCommand.Name)] Error [GET] on URL [$Url]: $PSItem" -Action 'Continue'
+        if (-not $scrapedData) {
+            Write-Warning "Failed to get data from Javlibrary using python scraper for URL: $Url"
+            return $null
+        }
+
+        # The python script does not provide a release year, so we extract it from the release date.
+        $releaseYear = if ($scrapedData.release_date) { ($scrapedData.release_date -split '-')[0] } else { $null }
+
+        # The old scraper returned a custom object for rating. We replicate that structure.
+        $ratingObject = if ($scrapedData.rating) {
+            [PSCustomObject]@{
+                Rating = $scrapedData.rating
+                Votes  = $null # Votes are not available from the new scraper
+            }
+        } else {
+            $null
+        }
+
+        # The old scraper returned a complex object for actresses. We simplify this to a list of names.
+        # For compatibility, we create a list of objects with a 'Name' property.
+        $actressObjects = @()
+        if ($scrapedData.actresses) {
+            foreach ($actressName in $scrapedData.actresses) {
+                $actressObjects += [PSCustomObject]@{
+                    Name = $actressName
+                    # Other properties from the old scraper are not available.
+                }
+            }
         }
 
         $movieDataObject = [PSCustomObject]@{
             Source        = if ($Url -match '/ja/') { 'javlibraryja' } elseif ($Url -match '/cn/' -or $Url -match '/tw/') { 'javlibraryzh' } else { 'javlibrary' }
             Url           = $Url
-            Id            = Get-JavlibraryId -WebRequest $webRequest
-            AjaxId        = Get-JavlibraryAjaxId -WebRequest $webRequest
-            Title         = Get-JavlibraryTitle -WebRequest $webRequest
-            ReleaseDate   = Get-JavlibraryReleaseDate -WebRequest $webRequest
-            ReleaseYear   = Get-JavlibraryReleaseYear -WebRequest $webRequest
-            Runtime       = Get-JavlibraryRuntime -WebRequest $webRequest
-            Director      = Get-JavlibraryDirector -WebRequest $webRequest
-            Maker         = Get-JavlibraryMaker -WebRequest $webRequest
-            Label         = Get-JavlibraryLabel -WebRequest $webRequest
-            Rating        = Get-JavlibraryRating -WebRequest $webRequest
-            Actress       = Get-JavlibraryActress -WebRequest $webRequest -JavlibraryBaseUrl $JavlibraryBaseUrl -Session:$Session -Url $Url
-            Genre         = Get-JavlibraryGenre -WebRequest $webRequest
-            CoverUrl      = Get-JavlibraryCoverUrl -WebRequest $webRequest
-            ScreenshotUrl = Get-JavlibraryScreenshotUrl -WebRequest $webRequest
+            Id            = $scrapedData.id
+            AjaxId        = $null # Not available from the new scraper
+            Title         = $scrapedData.title
+            ReleaseDate   = $scrapedData.release_date
+            ReleaseYear   = $releaseYear
+            Runtime       = $scrapedData.runtime
+            Director      = $scrapedData.director
+            Maker         = $scrapedData.maker
+            Label         = $scrapedData.label
+            Rating        = $ratingObject
+            Actress       = if ($actressObjects.Count -gt 0) { $actressObjects } else { $null }
+            Genre         = $scrapedData.genres
+            CoverUrl      = $scrapedData.cover_url
+            ScreenshotUrl = $null # Not available from the new scraper
         }
 
-        Write-JVLog -Write:$script:JVLogWrite -LogPath $script:JVLogPath -WriteLevel $script:JVLogWriteLevel -Level Debug -Message "[$($MyInvocation.MyCommand.Name)] JAVLibrary data object: $($movieDataObject | ConvertTo-Json -Depth 32 -Compress)"
+        Write-JVLog -Write:$script:JVLogWrite -LogPath $script:JVLogPath -WriteLevel $script:JVLogWriteLevel -Level Debug -Message "[$($MyInvocation.MyCommand.Name)] JAVLibrary data object (from Python): $($movieDataObject | ConvertTo-Json -Depth 5 -Compress)"
         Write-Output $movieDataObject
     }
 }
