@@ -1,4 +1,6 @@
-from pyjavinizer.core import extract_id
+from pyjavinizer.core import extract_id, search_javlibrary
+from unittest.mock import patch
+import requests
 from pyjavinizer.cli import gather_files
 
 
@@ -31,3 +33,13 @@ def test_gather_files_recursive(tmp_path):
 
     files = list(gather_files(tmp_path, recursive=True))
     assert nested in files
+
+
+def test_search_redirect():
+    mock_resp = requests.Response()
+    mock_resp.status_code = 200
+    mock_resp.url = 'https://www.javlibrary.com/en/?v=abcd1234'
+    mock_resp._content = b''
+
+    with patch('pyjavinizer.core.requests.get', return_value=mock_resp):
+        assert search_javlibrary('XMOM-065') == mock_resp.url

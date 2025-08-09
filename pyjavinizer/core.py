@@ -31,6 +31,10 @@ def search_javlibrary(jav_id: str) -> Optional[str]:
     except requests.RequestException:
         return None
 
+    # Some searches redirect straight to the video page. If so, return the final URL
+    if response.url != search_url and '?v=' in response.url:
+        return response.url
+
     soup = BeautifulSoup(response.text, 'html.parser')
     link = soup.select_one('div.video a')
     if not link:
