@@ -25,8 +25,12 @@ def extract_id(filename: str) -> Optional[str]:
 def search_javlibrary(jav_id: str) -> Optional[str]:
     """Search JavLibrary for the given ID and return the video page URL."""
     search_url = f'https://www.javlibrary.com/en/vl_searchbyid.php?keyword={jav_id}'
-    response = requests.get(search_url, headers=HEADERS, cookies=COOKIES, timeout=10)
-    response.raise_for_status()
+    try:
+        response = requests.get(search_url, headers=HEADERS, cookies=COOKIES, timeout=10)
+        response.raise_for_status()
+    except requests.RequestException:
+        return None
+
     soup = BeautifulSoup(response.text, 'html.parser')
     link = soup.select_one('div.video a')
     if not link:
@@ -39,8 +43,12 @@ def search_javlibrary(jav_id: str) -> Optional[str]:
 
 def get_metadata(url: str) -> Dict[str, Optional[str]]:
     """Fetch metadata from a JavLibrary video page."""
-    response = requests.get(url, headers=HEADERS, cookies=COOKIES, timeout=10)
-    response.raise_for_status()
+    try:
+        response = requests.get(url, headers=HEADERS, cookies=COOKIES, timeout=10)
+        response.raise_for_status()
+    except requests.RequestException:
+        return {}
+
     soup = BeautifulSoup(response.text, 'html.parser')
 
     def get_data(element_id, selector=None, attribute=None):

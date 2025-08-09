@@ -1,9 +1,14 @@
+"""Command-line interface for the simplified PyJavinizer tool."""
+
 import argparse
 from pathlib import Path
+
 from .core import extract_id, search_javlibrary, get_metadata, sort_file
 
 
 def gather_files(path: Path, recursive: bool):
+    """Yield media files from *path*, recursing into directories when requested."""
+
     if path.is_file():
         yield path
     else:
@@ -14,6 +19,8 @@ def gather_files(path: Path, recursive: bool):
 
 
 def main() -> None:
+    """Entry point for the CLI tool."""
+
     parser = argparse.ArgumentParser(description='Simplified Javinizer (Python)')
     parser.add_argument('path', help='Path to file or directory to sort')
     parser.add_argument('destination', help='Destination directory')
